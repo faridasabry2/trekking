@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trek Training Feedback</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f1ea;--card:#fff;--ink:#1f2d2e;--mut:#5f6b6c;--acc:#d9652b;--line:#d8d3c8;--sel:#1f3a3d;--selt:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141c1d;--card:#1e2a2b;--ink:#eee9df;--mut:#9aa7a8;--line:#34443f;--sel:#e8a26f;--selt:#141c1d}}
+:root[data-theme="dark"]{--bg:#141c1d;--card:#1e2a2b;--ink:#eee9df;--mut:#9aa7a8;--line:#34443f;--sel:#e8a26f;--selt:#141c1d}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+main{max-width:720px;margin:0 auto;padding:20px 16px 60px}
+h1{font-family:Georgia,serif;font-size:2rem;margin:.2em 0}
+.sub{color:var(--mut);margin:0 0 16px}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);height:6px;background:var(--line);border-radius:3px;z-index:5;margin-bottom:16px}
+.bar i{display:block;height:100%;width:0;background:var(--acc);border-radius:3px;transition:width .3s}
+section{background:var(--card);border-radius:14px;padding:18px;margin-bottom:16px;border:1px solid var(--line)}
+h2{font-family:Georgia,serif;font-size:1.25rem;margin:0 0 12px;color:var(--acc)}
+.q{margin:16px 0}.q>label,.q>b{display:block;font-weight:600;margin-bottom:8px}
+.hint{font-weight:400;color:var(--mut);font-size:.85rem}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+button.c{font:inherit;font-size:.9rem;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+button.c[aria-pressed=true]{background:var(--sel);color:var(--selt);border-color:var(--sel)}
+.rate button.c{flex:1;min-width:58px;border-radius:10px;text-align:center}
+.rate small{display:block;font-size:.68rem;opacity:.8}
+.scale{display:flex;justify-content:space-between;font-size:.75rem;color:var(--mut);margin-top:4px}
+textarea,input{width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink)}
+textarea{min-height:76px;resize:vertical}
+.go{font:inherit;font-weight:600;padding:14px 22px;border:0;border-radius:12px;background:var(--acc);color:#fff;cursor:pointer;width:100%}
+pre{white-space:pre-wrap;background:var(--bg);padding:12px;border-radius:10px;font-size:.85rem;max-height:320px;overflow:auto}
+#done{display:none}a.go{display:block;text-align:center;text-decoration:none;margin-bottom:12px}
+</style></head><body><main>
+<h1>Trek Training Feedback</h1>
+<p class="sub">Thank you for training with me. Your honest answers help me improve. About 10 minutes; skip anything that doesn't apply.</p>
+<div class="bar"><i id="pg"></i></div>
+<div id="f"></div>
+<button class="go" id="sub">Send my feedback</button>
+<input id="hp" name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+<section id="done"><h2 id="dt">Sending…</h2><p id="dp"></p>
+<div id="fb" style="display:none"><a class="go" id="em" href="#">Email my responses instead</a><pre id="out"></pre><button class="go" id="cp">Copy responses</button></div></section>
+</main>
+<script>
+const S=[{"t":"About you (optional)","q":[{"id":"name","k":"line","l":"Your name"},{"id":"trek","k":"line","l":"Which trek did you train for?"},{"id":"dur","k":"choice","l":"How long did we train together?","o":["Under 1 month","1–2 months","3–4 months","5+ months"]}]},{"t":"My expertise & coaching","q":[{"id":"e1","k":"rate","l":"How knowledgeable did I seem about mountain trekking?"},{"id":"e2","k":"rate","l":"How clearly did I explain what to do and why?"},{"id":"e3","k":"rate","l":"How well did I tailor the coaching to your level and goals?"},{"id":"e4","k":"rate","l":"How responsive and supportive was I when you had questions?"},{"id":"e5","k":"text","l":"Which piece of my advice ended up most valuable on the trek?"}]},{"t":"The training plan","q":[{"id":"p1","k":"choice","l":"Overall difficulty of the plan","o":["Too easy","Slightly easy","About right","Slightly hard","Too hard"]},{"id":"p2","k":"choice","l":"Was the time we had enough to prepare?","o":["Not enough","Just enough","More than enough"]},{"id":"p3","k":"rate","l":"How well did the plan build up week to week (progression)?"},{"id":"p4","k":"text","l":"Which workouts helped you most?"},{"id":"p5","k":"text","l":"Which felt unnecessary, or what was missing?"}]},{"t":"Fitness & physical prep","q":[{"id":"f1","k":"rate","l":"How physically prepared did you feel on trek day?"},{"id":"f2","k":"multi","l":"Where did you struggle most on the trek?","o":["Leg strength","Cardio / endurance","Uphill","Downhill / knees","Carrying the pack","Core / balance","Recovery between days","Nothing major"]},{"id":"f3","k":"text","l":"What physical prep would you have wanted more of?"}]},{"t":"Gear & packing advice","q":[{"id":"g1","k":"rate","l":"How useful was my gear and packing advice?"},{"id":"g2","k":"multi","l":"Where did you want more guidance?","o":["Boots & footwear","Clothing layers","Backpack & fit","Poles","Sleep system","Packing weight","Nothing, it was covered"]},{"id":"g3","k":"text","l":"Anything you over-packed, under-packed, or wish you'd known?"}]},{"t":"Nutrition & hydration","q":[{"id":"n1","k":"rate","l":"How useful was my nutrition and hydration advice?"},{"id":"n2","k":"multi","l":"What happened on the trek?","o":["Low energy","Dehydration","Stomach trouble","Lost appetite","Cramps","No issues"]},{"id":"n3","k":"text","l":"What food or hydration guidance would have helped?"}]},{"t":"Mental readiness & altitude","q":[{"id":"m1","k":"rate","l":"How mentally prepared did you feel for the tough moments?"},{"id":"m2","k":"rate","l":"How well did I prepare you for altitude?"},{"id":"m3","k":"choice","l":"Did you have altitude symptoms (headache, nausea, dizziness)?","o":["None","Mild","Moderate","Severe"]},{"id":"m4","k":"text","l":"What would have helped you handle the mental or altitude challenges better?"}]},{"t":"Trek-specific preparation","q":[{"id":"t1","k":"rate","l":"How well did the training match the actual route, terrain and weather?"},{"id":"t2","k":"text","l":"What surprised you most on the trek?"}]},{"t":"Overall","q":[{"id":"o1","k":"text","l":"What did I miss or leave out?"},{"id":"o2","k":"text","l":"What could I have done better?"},{"id":"o3","k":"text","l":"What should I definitely keep doing?"},{"id":"o4","k":"nps","l":"How likely are you to recommend me to a friend? (0 = not at all, 10 = definitely)"},{"id":"o5","k":"choice","l":"May I quote your feedback as a testimonial?","o":["Yes, with my name","Yes, anonymously","No"]}]}];const SC=["Poor","Fair","Good","Very good","Excellent"];
+const A={};let n=0;const f=document.getElementById('f'),tot=S.reduce((a,s)=>a+s.q.length,0);
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+function prog(){const d=Object.values(A).filter(v=>v&&v.length).length;document.getElementById('pg').style.width=(d/tot*100)+'%'}
+function chips(q,opts,multi,cls,lab){const r=el('div','row '+(cls||''));opts.forEach((o,i)=>{const b=el('button','c');b.type='button';b.setAttribute('aria-pressed','false');
+ b.append(document.createTextNode(lab?String(i+1):o));if(lab){b.append(el('small','',lab[i]))}
+ b.onclick=()=>{const v=lab?String(i+1):o;if(multi){const a=A[q.id]=A[q.id]||[];const k=a.indexOf(v);k<0?a.push(v):a.splice(k,1);b.setAttribute('aria-pressed',k<0)}
+ else{A[q.id]=A[q.id]===v?'':v;[...r.children].forEach(c=>c.setAttribute('aria-pressed','false'));if(A[q.id])b.setAttribute('aria-pressed','true')}prog()};r.append(b)});return r}
+S.forEach(s=>{const sec=el('section');sec.append(el('h2','',s.t));s.q.forEach(q=>{n++;const w=el('div','q');
+ const l=el('label','',n+'. '+q.l);w.append(l);
+ if(q.k==='rate'){w.append(chips(q,SC,0,'rate',SC));}
+ else if(q.k==='nps'){w.append(chips(q,Array.from({length:11},(_,i)=>String(i)),0));}
+ else if(q.k==='choice')w.append(chips(q,q.o,0));
+ else if(q.k==='multi'){l.append(el('span','hint',' (select all that apply)'));w.append(chips(q,q.o,1))}
+ else{const i=q.k==='line'?el('input'):el('textarea');i.oninput=()=>{A[q.id]=i.value.trim();prog()};w.append(i)}
+ sec.append(w)});f.append(sec)});
+// nps chips use index as value: fix
+const EP='https://formspree.io/f/mgavpqvl',$=id=>document.getElementById(id);
+$('sub').onclick=async()=>{const btn=$('sub');let t='TREK TRAINING FEEDBACK\n\n',k=0;
+ S.forEach(s=>{let h='';s.q.forEach(q=>{k++;let v=A[q.id];if(Array.isArray(v))v=v.join(', ');if(!v)return;
+  if(q.k==='rate')v=v+'/5 ('+SC[v-1]+')';h+=k+'. '+q.l+'\n   '+v+'\n'});if(h)t+='== '+s.t+' ==\n'+h+'\n'});
+ if(t.length<30){alert('Please answer at least one question first.');return}
+ $('out').textContent=t;
+ $('em').href='mailto:farida.sabry2@gmail.com?subject='+encodeURIComponent('Trek training feedback'+(A.name?' from '+A.name:''))+'&body='+encodeURIComponent(t);
+ btn.disabled=true;btn.textContent='Sending…';
+ const d=$('done');d.style.display='block';$('dt').textContent='Sending…';$('dp').textContent='';$('fb').style.display='none';d.scrollIntoView({behavior:'smooth'});
+ try{const r=await fetch(EP,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+  body:JSON.stringify({_subject:'Trek training feedback'+(A.name?' from '+A.name:''),name:A.name||'',trek:A.trek||'',message:t,_gotcha:$('hp').value})});
+  if(!r.ok)throw 0;$('dt').textContent='Thank you!';$('dp').textContent='Your feedback has been sent. I really appreciate it.';btn.style.display='none'}
+ catch(e){$('dt').textContent='Something went wrong';$('dp').textContent='Your feedback was not sent. Please use one of the options below.';$('fb').style.display='block';btn.disabled=false;btn.textContent='Try sending again'}};
+document.getElementById('cp').onclick=async e=>{const t=document.getElementById('out').textContent;try{await navigator.clipboard.writeText(t);e.target.textContent='Copied!'}catch(x){const r=document.createRange();r.selectNodeContents(document.getElementById('out'));const s=getSelection();s.removeAllRanges();s.addRange(r);e.target.textContent='Selected. Press copy on your device'}};
+</script></body></html>
